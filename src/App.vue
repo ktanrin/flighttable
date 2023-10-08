@@ -1,7 +1,7 @@
 <template>
   <div>
     <!-- Tabs for FlightTable, GroundNorth, and GroundSouth -->
-    <div class="tabs is-centered is-medium is-toggle">
+    <div class="tabs is-centered is-toggle">
       <ul>
         <li @click="activeTab = 'FlightTable'" :class="{ 'is-active': activeTab === 'FlightTable' }"><a>All Ground</a></li>
         <li @click="activeTab = 'GroundNorth'" :class="{ 'is-active': activeTab === 'GroundNorth' }"><a>Ground North</a></li>
@@ -87,7 +87,7 @@ export default {
 
 a{
   font-weight: bold;
-  font-size: 3vw !important;
+  font-size: 4vw !important;
 }
 
 /* Center the text within table cells (td) */

@@ -186,7 +186,7 @@ export default {
 /* Change bg-color blue , text white */
 th{
   font-weight: bolder;
-  font-size: 3vw;
+  font-size: 4.5vw;
   color: white !important;
   background-color: hsl(207, 61%, 53%);
 }
@@ -194,7 +194,7 @@ th{
 /* Adjust font size/bold, reduce space gap between border line */
 td{
   font-weight: bold;
-  font-size: 4vw;
+  font-size: 5.5vw;
   line-height: 1;
 }
 

@@ -74,7 +74,7 @@
 
         .hour, .min, .secs, .dots {
         font-family: 'Digital-7', sans-serif;
-        font-size: 5.5vw;
+        font-size: 7.5vw;
         font-weight: 500;
         line-height: 1.1;
         }
