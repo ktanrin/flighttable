@@ -154,11 +154,11 @@ export default {
       let backgroundColor = 'transparent';
       let textColor = 'black'; // Default text color
 
-      if (timeDiffTSATColor >= -5 && timeDiffTSATColor <= 4) {
+      if (timeDiffTSATColor >= -5 && timeDiffTSATColor <= 5) {
         backgroundColor = 'hsl(150,82%,53%)'; //green TSAT is within the range of -5 to +4 minutes
-      } else if (timeDiffTSATColor > 4 && timeDiffTSATColor <= 5) {
+      } else if (timeDiffTSATColor > 5 && timeDiffTSATColor <= 6) {
         backgroundColor = 'hsl(44,100%,77%)'; //yellow TSAT is within the range of +4 to +5 minutes
-      } else if (timeDiffTSATColor > 5 && timeDiffTSATColor <= 10) {
+      } else if (timeDiffTSATColor > 6 && timeDiffTSATColor <= 10) {
         backgroundColor = 'hsl(348,86%,61%)'; //red TSAT is +5 minutes or more
         textColor = 'white'; // Change text color to white
       }
