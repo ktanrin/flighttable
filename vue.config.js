@@ -6,8 +6,13 @@ module.exports = defineConfig({
       builderOptions: {
         win: {
           icon: 'src/assets/icon.png',
-          FontFace: 'src/assets/fonts/digital-7.ttf'
-        }
+        },
+        nsis: {
+          oneClick: false, // User must click through the installer
+          allowToChangeInstallationDirectory: true, // Allow user to select install location
+          perMachine: true, // Install for all users (requires elevation)
+          // Include other NSIS options as needed
+        },
       }
     }
     }

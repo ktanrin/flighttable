@@ -1,4 +1,9 @@
 <template>
+  <!-- Check if there are flights in filteredFlights -->
+  <div v-if="filteredFlights.length === 0">
+      <p>No flights available.</p>
+  </div>
+  <div v-else>
   <table class="table is-bordered is-striped is-narrow is-hoverable is-fullwidth">
     <thead>
       <tr>
@@ -27,6 +32,7 @@
       </tr>
     </tbody>
   </table>
+  </div>
 </template>
 
 <script>
@@ -42,7 +48,7 @@ export default {
     const now = new Date();
 
     const validFlights = this.flights.filter((flight) => {
-
+    //console.log(flight);
     if (flight.CTOTSTR !== '') {
         // Calculate tsat time based on ctot - exot - 5 minutes
         const ctotTime = this.parseHHMM(flight.CTOTSTR);
@@ -53,23 +59,27 @@ export default {
     if (flight.TSATSTR === '' || flight.TSATSTR === 'STBY') {
       return false; // Exclude rows with blank or 'STBY' in TSAT
     }
-
-    const tsatTime = this.parseHHMM(flight.TSATSTR);
-    const timeDiffTSAT = (now - tsatTime) / (1000 * 60); // Calculate time difference in minutes for TSAT
     
-    // Normal window: from -120 minutes to 10 minutes
-    const isInNormalWindow = timeDiffTSAT >= -120 && timeDiffTSAT <= 10;
+    const tsatTime = this.parseHHMM(flight.TSATSTR);
+    //console.log('tsat', flight.TSATSTR, 'aircraft', flight.AircraftId);
+    if(tsatTime){
+      const tsatTimeLocal = new Date(tsatTime.getTime() + (7 * 60 * 60 * 1000)); // Convert TSAT  which is to local time
+      //console.log('oldTSAT', tsatTime,'newTSAT:', tsatTimeLocal, 'Now:', now);
+      //console.log('new diffTSAT' , (now - tsatTimeLocal) / (1000 * 60));
+      const timeDiffTSAT = (now - tsatTimeLocal) / (1000 * 60); // Calculate time difference in minutes for TSAT
+      //console.log('Time Diff:', timeDiffTSAT, 'TSAT:', flight.TSATSTR, 'Now:', now, 'AirCraft:', flight.AircraftId);
+      // Normal window: from -120 minutes to 10 minutes
+      const isInNormalWindow = timeDiffTSAT >= -120 && timeDiffTSAT <= 10;
+      // Special cases for midnight crossover:
+      // When current time is just after midnight and TSAT is before midnight
+      const isCurrentAfterMidnight = timeDiffTSAT >= -1439 && timeDiffTSAT <= -1430;
 
-    // Special cases for midnight crossover:
-    // When current time is just after midnight and TSAT is before midnight
-    const isCurrentAfterMidnight = timeDiffTSAT >= -1439 && timeDiffTSAT <= -1430;
-
-    // When current time is just before midnight and TSAT is after midnight
-    const isTSATAfterMidnight = timeDiffTSAT >= 1320 && timeDiffTSAT <= 1439;
-
-    return isInNormalWindow || isCurrentAfterMidnight || isTSATAfterMidnight;
+      // When current time is just before midnight and TSAT is after midnight
+      const isTSATAfterMidnight = timeDiffTSAT >= 1320 && timeDiffTSAT <= 1439;
+      return isInNormalWindow || isCurrentAfterMidnight || isTSATAfterMidnight;
+    }
   });
-
+  
   // Sort by TSAT
   return validFlights.sort((a, b) => {
     //const tsatTimeA = this.parseHHMM(a.TSATSTR);
@@ -128,16 +138,19 @@ export default {
     }
 
     const [hours, minutes] = timeStr.match(/\d{2}/g);
-    const utcHours = (parseInt(hours) - 7 + 24) % 24; // Subtract 7 hours and ensure it's within the valid range
+    const utcHours = (parseInt(hours)  + 24) % 24; // Subtract 7 hours and ensure it's within the valid range
 
     return `${utcHours.toString().padStart(2, '0')}${minutes}`;
 },
 
     getTSATStyle(timeStr) {
+      
       const now = new Date();
       const tsatTime = this.parseHHMM(timeStr);
-      let timeDiffTSATColor = (now - tsatTime) / (1000 * 60); // Calculate time difference in minutes for TSAT
-      
+      const tsatTimeLocal = new Date(tsatTime.getTime() + (7 * 60 * 60 * 1000)); // Convert TSAT to local time
+      //console.log('tsat local: ', tsatTimeLocal, 'now:', now);
+      let timeDiffTSATColor = (now - tsatTimeLocal) / (1000 * 60); // Calculate time difference in minutes for TSAT
+      //console.log('Time Diff:', timeDiffTSATColor, 'TSAT:', timeStr, 'Now:', now);
       // Special cases for midnight crossover:
       // If TSAT is after midnight but current time is before midnight
       if (timeDiffTSATColor >= 1320 && timeDiffTSATColor <= 1439) {

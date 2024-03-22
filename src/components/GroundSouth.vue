@@ -68,19 +68,22 @@ export default {
     }
 
     const tsatTime = this.parseHHMM(flight.TSATSTR);
-    const timeDiffTSAT = (now - tsatTime) / (1000 * 60); // Calculate time difference in minutes for TSAT
-    
-    // Normal window: from -120 minutes to 10 minutes
-    const isInNormalWindow = timeDiffTSAT >= -120 && timeDiffTSAT <= 10;
+    if(tsatTime){
+      const tsatTimeLocal = new Date(tsatTime.getTime() + (7 * 60 * 60 * 1000)); // Convert TSAT  which is to local time
+      //console.log('oldTSAT', tsatTime,'newTSAT:', tsatTimeLocal, 'Now:', now);
+      //console.log('new diffTSAT' , (now - tsatTimeLocal) / (1000 * 60));
+      const timeDiffTSAT = (now - tsatTimeLocal) / (1000 * 60); // Calculate time difference in minutes for TSAT
+      //console.log('Time Diff:', timeDiffTSAT, 'TSAT:', flight.TSATSTR, 'Now:', now, 'AirCraft:', flight.AircraftId);
+      // Normal window: from -120 minutes to 10 minutes
+      const isInNormalWindow = timeDiffTSAT >= -120 && timeDiffTSAT <= 10;
+      // Special cases for midnight crossover:
+      // When current time is just after midnight and TSAT is before midnight
+      const isCurrentAfterMidnight = timeDiffTSAT >= -1439 && timeDiffTSAT <= -1430;
 
-    // Special cases for midnight crossover:
-    // When current time is just after midnight and TSAT is before midnight
-    const isCurrentAfterMidnight = timeDiffTSAT >= -1439 && timeDiffTSAT <= -1430;
-
-    // When current time is just before midnight and TSAT is after midnight
-    const isTSATAfterMidnight = timeDiffTSAT >= 1320 && timeDiffTSAT <= 1439;
-
-    return isInNormalWindow || isCurrentAfterMidnight || isTSATAfterMidnight;
+      // When current time is just before midnight and TSAT is after midnight
+      const isTSATAfterMidnight = timeDiffTSAT >= 1320 && timeDiffTSAT <= 1439;
+      return isInNormalWindow || isCurrentAfterMidnight || isTSATAfterMidnight;
+    }
   })
   .sort((a, b)  => {
     const now = new Date();
@@ -132,14 +135,15 @@ export default {
       }
 
       const [hours, minutes] = timeStr.match(/\d{2}/g);
-      const utcHours = (parseInt(hours) - 7 + 24) % 24; // Subtract 7 hours and ensure it's within the valid range
+      const utcHours = (parseInt(hours) + 24) % 24; // Subtract 7 hours and ensure it's within the valid range
 
       return `${utcHours.toString().padStart(2, '0')}${minutes}`;
     },
     getTSATStyle(timeStr) {
       const now = new Date();
       const tsatTime = this.parseHHMM(timeStr);
-      let timeDiffTSATColor = (now - tsatTime) / (1000 * 60); // Calculate time difference in minutes for TSAT
+      const tsatTimeLocal = new Date(tsatTime.getTime() + (7 * 60 * 60 * 1000)); // Convert TSAT to local time
+      let timeDiffTSATColor = (now - tsatTimeLocal) / (1000 * 60); // Calculate time difference in minutes for TSAT
       
       // Special cases for midnight crossover:
       // If TSAT is after midnight but current time is before midnight

@@ -45,6 +45,7 @@ export default {
         const response = await fetch('https://atfm.aerothai.aero/IDEPATCO/GetAirlineData?Airport=VTBD');
         const data = await response.json();
         this.flightData = data;
+        //console.log('Fetched flight data:', this.flightData);
         
       } catch (error) {
         console.error('Error fetching flight data:', error);
@@ -74,7 +75,7 @@ export default {
 @import '~bulma/css/bulma.css';
 
 /* Remove extra space under the tabs bar */
-.tabs.is-centered.is-meduim.is-toggle {
+.tabs.is-centered.is-toggle {
   margin-bottom: 0;
 }
 
@@ -87,7 +88,7 @@ export default {
 
 a{
   font-weight: bold;
-  font-size: 4vw !important;
+  font-size: 3.975vw !important;
 }
 
 /* Center the text within table cells (td) */
