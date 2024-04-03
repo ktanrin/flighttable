@@ -40,12 +40,44 @@ export default {
     };
   },
   methods: {
+  //   async authenticateAndGetToken(){
+  //     const response = await fetch('https://atfm.aerothai.aero/Account/Login', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         username: 'admin',
+  //         password: 'aerothai',
+  //       }),
+  //     });
+  //     const data = await response.json();
+  //     console.log('Authenticated and got token:', data.token);
+  //     return data.token;
+  //   },
+    
+  //   async fetchDataWithToken(token){
+  //     const response = await fetch('https://atfm.aerothai.aero/IDEPATCO/GetATCOData?Airport=VTBD&TimeMode=UTC', {
+  //   method: 'GET',
+  //   headers: {
+  //     'Authorization': `Bearer ${token}`,
+  //     // Other headers as needed
+  //   },
+  // });
+
+  //     const data = await response.json();
+  //     return data;
+  //   },
+
     async fetchFlightData() {
       try {
         const response = await fetch('https://atfm.aerothai.aero/IDEPATCO/GetAirlineData?Airport=VTBD');
         const data = await response.json();
+        //const token = await this.authenticateAndGetToken(); // Authenticate to get the token
+        //const data = await this.fetchDataWithToken(token);
         this.flightData = data;
-        //console.log('Fetched flight data:', this.flightData);
+        let now = new Date().toLocaleTimeString();
+        console.log('Time', now ,'Fetched flight data from server:', this.flightData);
         
       } catch (error) {
         console.error('Error fetching flight data:', error);
@@ -57,7 +89,7 @@ export default {
 
     this.fetchInterval = setInterval(() => {
         this.fetchFlightData();
-    }, 30000);
+    }, 5000);
   },
 
 
