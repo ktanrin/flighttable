@@ -65,14 +65,14 @@ export default {
     if(tsatTime){
       const tsatTimeLocal = new Date(tsatTime.getTime() + (7 * 60 * 60 * 1000)); // Convert TSAT  which is to local time
       //console.log('oldTSAT', tsatTime,'newTSAT:', tsatTimeLocal, 'Now:', now);
-      //console.log('new diffTSAT' , (now - tsatTimeLocal) / (1000 * 60));
+      console.log('new diffTSAT' , (now - tsatTimeLocal) / (1000 * 60));
       const timeDiffTSAT = (now - tsatTimeLocal) / (1000 * 60); // Calculate time difference in minutes for TSAT
-      //console.log('Time Diff:', timeDiffTSAT, 'TSAT:', flight.TSATSTR, 'Now:', now, 'AirCraft:', flight.AircraftId);
+      console.log('Time Diff:', timeDiffTSAT, 'TSAT:', flight.TSATSTR, 'Now:', now, 'AirCraft:', flight.AircraftId);
       // Normal window: from -120 minutes to 10 minutes
       const isInNormalWindow = timeDiffTSAT >= -120 && timeDiffTSAT <= 10;
       // Special cases for midnight crossover:
       // When current time is just after midnight and TSAT is before midnight
-      const isCurrentAfterMidnight = timeDiffTSAT >= -1439 && timeDiffTSAT <= -1430;
+      const isCurrentAfterMidnight = timeDiffTSAT >= -1490 && timeDiffTSAT <= -1430;
 
       // When current time is just before midnight and TSAT is after midnight
       const isTSATAfterMidnight = timeDiffTSAT >= 1320 && timeDiffTSAT <= 1439;
@@ -80,35 +80,29 @@ export default {
     }
   });
   
-  // Sort by TSAT
-  return validFlights.sort((a, b) => {
-    //const tsatTimeA = this.parseHHMM(a.TSATSTR);
-    //const tsatTimeB = this.parseHHMM(b.TSATSTR);
+  // Sort flights by adjusted time difference
+  const sortedFlights = validFlights.sort((a, b) => {
+      const tsatTimeA = this.parseHHMM(a.TSATSTR);
+      const tsatTimeB = this.parseHHMM(b.TSATSTR);
 
-    const now = new Date();
-     // Calculate the difference in minutes between TSAT time and current time
-     const adjustTimeDiff = (diff) => {
+      // Adjust time differences for flights across midnight
+      const adjustTimeDiff = (diff) => {
         if (diff < -120) {
-            return diff + (24 * 60);
+          return diff + (24 * 60);
         } else if (diff > 120) {
-            return diff - (24 * 60);
+          return diff - (24 * 60);
         }
         return diff;
-    };
+      };
 
-    const tsatTimeA = this.parseHHMM(a.TSATSTR);
-    const diffA = (tsatTimeA - now) / (1000 * 60);
-    const adjustedDiffA = adjustTimeDiff(diffA);
+      const diffA = adjustTimeDiff((tsatTimeA - now) / (1000 * 60));
+      const diffB = adjustTimeDiff((tsatTimeB - now) / (1000 * 60));
 
-    const tsatTimeB = this.parseHHMM(b.TSATSTR);
-    const diffB = (tsatTimeB - now) / (1000 * 60);
-    const adjustedDiffB = adjustTimeDiff(diffB);
+      return diffA - diffB;
+    });
 
-    // Now, sort based on the adjusted time difference
-    return adjustedDiffA - adjustedDiffB;
-
-    //return tsatTimeA - tsatTimeB;
-  });
+    return sortedFlights;
+  
 },
 
   },
