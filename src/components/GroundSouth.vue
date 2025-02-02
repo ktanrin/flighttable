@@ -78,7 +78,7 @@ export default {
       const isInNormalWindow = timeDiffTSAT >= -120 && timeDiffTSAT <= 10;
       // Special cases for midnight crossover:
       // When current time is just after midnight and TSAT is before midnight
-      const isCurrentAfterMidnight = timeDiffTSAT >= -1439 && timeDiffTSAT <= -1430;
+      const isCurrentAfterMidnight = timeDiffTSAT >= -1490 && timeDiffTSAT <= -1430;
 
       // When current time is just before midnight and TSAT is after midnight
       const isTSATAfterMidnight = timeDiffTSAT >= 1320 && timeDiffTSAT <= 1439;
