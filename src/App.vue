@@ -82,7 +82,20 @@ export default {
       } catch (error) {
         console.error('Error fetching flight data:', error);
       }
+    },
+
+     // Function to handle export when requested by Electron
+      handleExportRequest() {
+        console.log('Electron requested flight data export');
+        if (this.flightData && this.flightData.length > 0) {
+            // ✅ Ensure data is serializable
+            const serializableData = JSON.parse(JSON.stringify(this.flightData));
+            window.electronAPI.exportToExcel(serializableData);
+        } else {
+            console.warn("No flight data available for export.");
+        }
     }
+
   },
   mounted() {
     this.fetchFlightData();
@@ -90,6 +103,13 @@ export default {
     this.fetchInterval = setInterval(() => {
         this.fetchFlightData();
     }, 5000);
+
+     // ✅ Ensure Electron API exists before calling `onRequestFlightData`
+    if (window.electronAPI && typeof window.electronAPI.onRequestFlightData === 'function') {
+        window.electronAPI.onRequestFlightData(this.handleExportRequest);
+    } else {
+        console.warn("Electron API `onRequestFlightData` is not available.");
+    }
   },
 
 

@@ -16,7 +16,8 @@
     "boostrap": "^2.0.0",
     "bulma": "^0.9.4",
     "core-js": "^3.36.1",
-    "vue": "^3.4.21"
+    "vue": "^3.4.21",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^7.24.3",
