@@ -78,6 +78,11 @@ export default {
         this.flightData = data;
         let now = new Date().toLocaleTimeString();
         console.log('Time', now ,'Fetched flight data from server:', this.flightData);
+
+        // Auto-save to text file every fetch
+        if (window.electronAPI) {
+          window.electronAPI.saveToText(JSON.stringify(this.flightData));
+        }
         
       } catch (error) {
         console.error('Error fetching flight data:', error);
@@ -88,12 +93,19 @@ export default {
       handleExportRequest() {
         console.log('Electron requested flight data export');
         if (this.flightData && this.flightData.length > 0) {
-            // ✅ Ensure data is serializable
+            // Ensure data is serializable
             const serializableData = JSON.parse(JSON.stringify(this.flightData));
             window.electronAPI.exportToExcel(serializableData);
         } else {
             console.warn("No flight data available for export.");
         }
+    },
+    // 📌 Handle "Save to Text" request from Electron menu
+    handleSaveToTextRequest() {
+      console.log("Electron menu requested save to text");
+      if (window.electronAPI && this.flightData.length > 0) {
+        window.electronAPI.saveToText(JSON.stringify(this.flightData));
+      }
     }
 
   },
@@ -107,6 +119,7 @@ export default {
      // ✅ Ensure Electron API exists before calling `onRequestFlightData`
     if (window.electronAPI && typeof window.electronAPI.onRequestFlightData === 'function') {
         window.electronAPI.onRequestFlightData(this.handleExportRequest);
+        window.electronAPI.onRequestSaveToText(this.handleSaveToTextRequest);
     } else {
         console.warn("Electron API `onRequestFlightData` is not available.");
     }

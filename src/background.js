@@ -4,7 +4,7 @@ import { app, protocol, BrowserWindow, Menu} from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import { ipcMain, dialog } from 'electron';
-import fs from 'fs'; // ✅ Import the filesystem module
+import fs from 'fs'; // Import the filesystem module
 import path from 'path';
 import * as XLSX from 'xlsx';
 
@@ -59,23 +59,23 @@ function exportToExcel(flightData) {
       EOBT: flight.EOBTSTR || '',
       WP: flight.Waypoint || '',
       RWY: flight.DepartureRunway || '',
-      TOBT: flight.SuggestTOBT || '',
+      TOBT: flight.AirlineOffBlockTimeSTR || '',
       ETOT: flight.ETOTSTR || '',
-      TTOT: flight.TTOTSTR || '',
+      TTOT: flight.STOTSTR || '',
       CTOT: flight.CTOTSTR || '',
       ATOT: flight.ATOTSTR || '',
       EXOT: flight.EXOTSTR || '',
       TSAT: flight.TSATSTR || '',
       ARDT: flight.ARDTSTR || '',
-      AOBT: flight.AOBTSTR || '',
-      Differ: calculateTimeDifference(flight.TSATSTR, flight.SuggestTOBT)
+      AOBT: flight.iFIMSAOBTSTR || '',
+      Differ: calculateTimeDifference(flight.TSATSTR, flight.AirlineOffBlockTimeSTR)
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data, { header: headers });
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Flights');
 
-    // ✅ Ask the user where to save the file
+    // Ask the user where to save the file
     const filePath = dialog.showSaveDialogSync({
       title: 'Save Excel File',
       defaultPath: path.join(app.getPath('documents'), 'FlightData.xlsx'),
@@ -83,7 +83,7 @@ function exportToExcel(flightData) {
     });
 
     if (filePath) {
-      // ✅ Use `fs.writeFileSync` instead of XLSX.writeFile for better file handling
+      // Use `fs.writeFileSync` instead of XLSX.writeFile for better file handling
       const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
       fs.writeFileSync(filePath, excelBuffer);
       dialog.showMessageBoxSync({
@@ -101,6 +101,84 @@ function exportToExcel(flightData) {
     });
   }
 }
+
+// 📌 Function to save flight data as a text file
+function saveFlightDataToTxt(flightData) {
+  const parsedData = JSON.parse(flightData);
+  if (!parsedData || parsedData.length === 0) {
+    console.warn('No flight data to save.');
+    return;
+  }
+
+  const atcoheaders = [
+    'Callsign', 'ACType', 'Stand', 'EOBT', 'WP', 'RWY', 'TOBT', 'ETOT',
+    'TTOT', 'CTOT', 'ATOT', 'EXOT', 'TSAT', 'ARDT', 'AOBT', 'Differ'
+  ];
+
+  const airlineheaders = ['Arrival','Reg','Type','From','A/ELDT','A/EIBT','Departure','To',
+    'EOBT','Parking Stand','TOBT','TSAT','ARDT','AOBT','CTOT','ATOT'
+  ];
+
+  //const filePath = path.join(app.getPath('documents'), 'FlightData.txt');
+  const atcofilePath = "C:/iDEPdata/iDEPatco.txt";
+  const airlinefilePath = "C:/iDEPdata/iDEPairline.txt";
+  // Prepare text content
+  let atcoContent = atcoheaders.join('\t') + '\n'; // Header row
+  parsedData.forEach(flight => {
+    const row = [
+      flight.AircraftId + '\t' || '',
+      flight.Type || '',
+      flight.DepartureGate || '',
+      flight.EOBTSTR || '',
+      flight.Waypoint || '',
+      flight.DepartureRunway || '',
+      flight.AirlineOffBlockTimeSTR || '',
+      flight.ETOTSTR || '',
+      flight.STOTSTR || '',
+      flight.CTOTSTR || '',
+      flight.ATOTSTR || '',
+      flight.EXOTSTR || '',
+      flight.TSATSTR || '',
+      flight.ARDTSTR || '',
+      flight.iFIMSAOBTSTR || '',
+      calculateTimeDifference(flight.TSATSTR, flight.AirlineOffBlockTimeSTR)
+    ].join('\t');
+    
+    atcoContent += row + '\n';
+  });
+
+  let airlineContent = airlineheaders.join('\t') + '\n'; // Header row
+  parsedData.forEach(flight => {
+    const row = [
+      flight.PreviousCallsign || '',
+      flight.REG || '',
+      flight.Type || '',
+      flight.PreviousDeparture || '',
+      flight.PreviousELDT || '',
+      flight.AIBTSTR || '',
+      flight.AircraftId + '\t' || '',
+      flight.Destination || '',
+      flight.EOBTSTR || '',
+      flight.DepartureGate + '\t' || '',
+      flight.AirlineOffBlockTimeSTR || '',
+      flight.TSATSTR || '',
+      flight.ARDTSTR || '',
+      flight.iFIMSAOBTSTR || '',
+      flight.CTOTSTR || '',
+      flight.ATOTSTR || ''
+    ].join('\t');
+    
+    airlineContent += row + '\n';
+  });
+
+  // Write the file (Auto replace old file)
+  fs.writeFileSync(atcofilePath, atcoContent, 'utf-8');
+  console.log(`Flight data saved to ${atcofilePath}`);
+
+  fs.writeFileSync(airlinefilePath, airlineContent, 'utf-8');
+  console.log(`Flight data saved to ${airlinefilePath}`);
+}
+
 
 function calculateTimeDifference(tsat, tobt) {
   if (!tsat || !tobt) return '';
@@ -166,6 +244,12 @@ function createMenu() {
       label: 'File',
       submenu: [
         {
+          label: 'Save to Text File',
+          click: () => {
+            mainWindow.webContents.send('request-save-to-text');
+          }
+        },
+        {
           label: 'Export to Excel',
           click: () => {
             mainWindow.webContents.send('request-flight-data');
@@ -187,8 +271,7 @@ function createMenu() {
   return Menu.buildFromTemplate(template);
 }
 
-// IPC Handlers
-
+// IPC Handlers excel
 ipcMain.handle('export-to-excel', async (event, flightData) => {
   try {
     if (!Array.isArray(flightData)) {
@@ -201,6 +284,14 @@ ipcMain.handle('export-to-excel', async (event, flightData) => {
   }
 });
 
+// IPC Handlers text
+ipcMain.on('save-to-text', (event, flightData) => {
+  try {
+    saveFlightDataToTxt(flightData);
+  } catch (error) {
+    console.error('Error saving to text file:', error);
+  }
+});
 
 // Exit cleanly on request from parent process in development mode.
 if (isDevelopment) {
