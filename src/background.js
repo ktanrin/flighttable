@@ -9,7 +9,7 @@ import path from 'path';
 import * as XLSX from 'xlsx';
 
 const isDevelopment = process.env.NODE_ENV !== 'production'
-
+const NULL_DATE = -62135596800000; // Represents an invalid date (0001-01-01T00:00:00.000Z)
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true } }
@@ -44,6 +44,35 @@ async function createWindow() {
   return win;
 }
 
+// Ensure the directory exists before writing
+function ensureDirectoryExists(filePath) {
+  const dir = path.dirname(filePath);
+  if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function formatTimestamp(timestamp) {
+  if (!timestamp || timestamp === `/Date(${NULL_DATE})/`) return '\t\t'; // Handle null dates
+
+  // Extract the numeric value from "/Date(1739447100000)/"
+  const match = timestamp.match(/\/Date\((\d+)\)\//);
+  if (!match) return '\t\t'; // If format is incorrect, return empty
+
+  const dateValue = parseInt(match[1], 10);
+  const date = new Date(dateValue);
+  if (isNaN(date.getTime())) return '\t\t'; // If invalid, return empty
+
+  // Format as UTC time
+  const dd = String(date.getUTCDate()).padStart(2, '0');
+  const mm = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are 0-based
+  const yyyy = date.getUTCFullYear();
+  const hh = String(date.getUTCHours()).padStart(2, '0');
+  const min = String(date.getUTCMinutes()).padStart(2, '0');
+
+  return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
+}
+
 // Export to excel function
 function exportToExcel(flightData) {
   try {
@@ -56,18 +85,18 @@ function exportToExcel(flightData) {
       Callsign: flight.AircraftId || '',
       ACType: flight.Type || '',
       Stand: flight.DepartureGate || '',
-      EOBT: flight.EOBTSTR || '',
+      EOBT: formatTimestamp(flight.EOBT) || '',
       WP: flight.Waypoint || '',
       RWY: flight.DepartureRunway || '',
-      TOBT: flight.AirlineOffBlockTimeSTR || '',
-      ETOT: flight.ETOTSTR || '',
-      TTOT: flight.STOTSTR || '',
-      CTOT: flight.CTOTSTR || '',
-      ATOT: flight.ATOTSTR || '',
+      TOBT: formatTimestamp(flight.AirlineOffBlockTime) || '',
+      ETOT: formatTimestamp(flight.ETOT) || '',
+      TTOT: formatTimestamp(flight.STOT) || '',
+      CTOT: formatTimestamp(flight.CTOT) || '',
+      ATOT: formatTimestamp(flight.ATOT) || '',
       EXOT: flight.EXOTSTR || '',
-      TSAT: flight.TSATSTR || '',
-      ARDT: flight.ARDTSTR || '',
-      AOBT: flight.iFIMSAOBTSTR || '',
+      TSAT: formatTimestamp(flight.TSAT) || '',
+      ARDT: formatTimestamp(flight.ARDT) || '',
+      AOBT: formatTimestamp(flight.iFIMSAOBT) || '',
       Differ: calculateTimeDifference(flight.TSATSTR, flight.AirlineOffBlockTimeSTR)
     }));
 
@@ -111,17 +140,20 @@ function saveFlightDataToTxt(flightData) {
   }
 
   const atcoheaders = [
-    'Callsign', 'ACType', 'Stand', 'EOBT', 'WP', 'RWY', 'TOBT', 'ETOT',
-    'TTOT', 'CTOT', 'ATOT', 'EXOT', 'TSAT', 'ARDT', 'AOBT', 'Differ'
+    'Callsign', 'ACType', 'Stand', 'EOBT\t\t', 'WP', 'RWY', 'TOBT\t\t', 'ETOT\t\t',
+    'TTOT\t\t', 'CTOT\t\t', 'ATOT\t\t', 'EXOT', 'TSAT\t\t', 'ARDT\t\t', 'AOBT\t\t', 'Differ'
   ];
 
-  const airlineheaders = ['Arrival','Reg','Type','From','A/ELDT','A/EIBT','Departure','To',
-    'EOBT','Parking Stand','TOBT','TSAT','ARDT','AOBT','CTOT','ATOT'
+  const airlineheaders = ['Arrival','Reg','Type','From','A/ELDT\t\t','A/EIBT\t\t','Departure','To',
+    'EOBT\t\t','Parking Stand','TOBT\t\t','TSAT\t\t','ARDT\t\t','AOBT\t\t','CTOT\t\t','ATOT\t\t'
   ];
 
   //const filePath = path.join(app.getPath('documents'), 'FlightData.txt');
   const atcofilePath = "C:/iDEPdata/iDEPatco.txt";
   const airlinefilePath = "C:/iDEPdata/iDEPairline.txt";
+
+  ensureDirectoryExists(atcofilePath);
+  ensureDirectoryExists(airlinefilePath);
   // Prepare text content
   let atcoContent = atcoheaders.join('\t') + '\n'; // Header row
   parsedData.forEach(flight => {
@@ -129,18 +161,18 @@ function saveFlightDataToTxt(flightData) {
       flight.AircraftId + '\t' || '',
       flight.Type || '',
       flight.DepartureGate || '',
-      flight.EOBTSTR || '',
+      formatTimestamp(flight.EOBT) || '',
       flight.Waypoint || '',
       flight.DepartureRunway || '',
-      flight.AirlineOffBlockTimeSTR || '',
-      flight.ETOTSTR || '',
-      flight.STOTSTR || '',
-      flight.CTOTSTR || '',
-      flight.ATOTSTR || '',
+      formatTimestamp(flight.AirlineOffBlockTime) || '',
+      formatTimestamp(flight.ETOT) || '',
+      formatTimestamp(flight.STOT) || '',
+      formatTimestamp(flight.CTOT) || '',
+      formatTimestamp(flight.ATOT) || '',
       flight.EXOTSTR || '',
-      flight.TSATSTR || '',
-      flight.ARDTSTR || '',
-      flight.iFIMSAOBTSTR || '',
+      formatTimestamp(flight.TSAT) || '',
+      formatTimestamp(flight.ARDT) || '',
+      formatTimestamp(flight.iFIMSAOBT) || '',
       calculateTimeDifference(flight.TSATSTR, flight.AirlineOffBlockTimeSTR)
     ].join('\t');
     
@@ -154,18 +186,18 @@ function saveFlightDataToTxt(flightData) {
       flight.REG || '',
       flight.Type || '',
       flight.PreviousDeparture || '',
-      flight.PreviousELDT || '',
-      flight.AIBTSTR || '',
+      convertPreviousELDT(flight.PreviousELDT,flight.EOBT) || '',
+      formatTimestamp(flight.AIBT) || '',
       flight.AircraftId + '\t' || '',
       flight.Destination || '',
-      flight.EOBTSTR || '',
+      formatTimestamp(flight.EOBT) || '',
       flight.DepartureGate + '\t' || '',
-      flight.AirlineOffBlockTimeSTR || '',
-      flight.TSATSTR || '',
-      flight.ARDTSTR || '',
-      flight.iFIMSAOBTSTR || '',
-      flight.CTOTSTR || '',
-      flight.ATOTSTR || ''
+      formatTimestamp(flight.AirlineOffBlockTime) || '',
+      formatTimestamp(flight.TSAT) || '',
+      formatTimestamp(flight.ARDT) || '',
+      formatTimestamp(flight.iFIMSAOBT) || '',
+      formatTimestamp(flight.CTOT) || '',
+      formatTimestamp(flight.ATOT) || ''
     ].join('\t');
     
     airlineContent += row + '\n';
@@ -178,6 +210,48 @@ function saveFlightDataToTxt(flightData) {
   fs.writeFileSync(airlinefilePath, airlineContent, 'utf-8');
   console.log(`Flight data saved to ${airlinefilePath}`);
 }
+
+function convertPreviousELDT(previousELDT, referenceTimestamp) {
+  if (!previousELDT || !referenceTimestamp) return "\t\t"; // Return blank if invalid
+
+  // Ensure PreviousELDT is in correct HHMM format (4-digit time)
+  if (!/^\d{4}$/.test(previousELDT)) return "\t\t";
+
+  // Extract reference timestamp (AIBT) and validate
+  const timestampMatch = referenceTimestamp.match(/\d+/);
+  if (!timestampMatch) return "\t\t"; // Return blank if invalid
+
+  const referenceDate = new Date(parseInt(timestampMatch[0])); // Convert reference timestamp to Date
+  if (isNaN(referenceDate.getTime())) return "\t\t"; // Return blank if invalid timestamp
+
+  // Extract date components from referenceDate (in UTC)
+  let year = referenceDate.getUTCFullYear();
+  let month = referenceDate.getUTCMonth();
+  let day = referenceDate.getUTCDate();
+
+  // Extract HHMM from PreviousELDT
+  let hours = parseInt(previousELDT.substring(0, 2));
+  let minutes = parseInt(previousELDT.substring(2, 4));
+
+  // Create a new date with extracted time (assuming same date as reference initially)
+  let previousELDTDate = new Date(Date.UTC(year, month, day, hours, minutes));
+
+  // Adjust if PreviousELDT is **from the previous day**
+  if (previousELDTDate > referenceDate) {
+    previousELDTDate.setUTCDate(previousELDTDate.getUTCDate() - 1);
+  }
+
+  // Convert to UTC format and adjust for timezone offset  
+  previousELDTDate.setUTCHours(previousELDTDate.getUTCHours());
+
+  // Convert to DD-MM-YYYY HH:mm format
+  const formattedDate = previousELDTDate.toISOString().split("T")[0].split("-").reverse().join("-") + 
+                        " " + previousELDTDate.toISOString().substring(11, 16);
+
+  return formattedDate;
+}
+
+
 
 
 function calculateTimeDifference(tsat, tobt) {
