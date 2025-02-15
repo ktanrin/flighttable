@@ -53,15 +53,15 @@ function ensureDirectoryExists(filePath) {
 }
 
 function formatTimestamp(timestamp) {
-  if (!timestamp || timestamp === `/Date(${NULL_DATE})/`) return '\t\t'; // Handle null dates
+  if (!timestamp || timestamp === `/Date(${NULL_DATE})/`) return ''; // Handle null dates
 
   // Extract the numeric value from "/Date(1739447100000)/"
   const match = timestamp.match(/\/Date\((\d+)\)\//);
-  if (!match) return '\t\t'; // If format is incorrect, return empty
+  if (!match) return ''; // If format is incorrect, return empty
 
   const dateValue = parseInt(match[1], 10);
   const date = new Date(dateValue);
-  if (isNaN(date.getTime())) return '\t\t'; // If invalid, return empty
+  if (isNaN(date.getTime())) return ''; // If invalid, return empty
 
   // Format as UTC time
   const dd = String(date.getUTCDate()).padStart(2, '0');
@@ -140,12 +140,12 @@ function saveFlightDataToTxt(flightData) {
   }
 
   const atcoheaders = [
-    'Callsign', 'ACType', 'Stand', 'EOBT\t\t', 'WP', 'RWY', 'TOBT\t\t', 'ETOT\t\t',
-    'TTOT\t\t', 'CTOT\t\t', 'ATOT\t\t', 'EXOT', 'TSAT\t\t', 'ARDT\t\t', 'AOBT\t\t', 'Differ'
+    'Callsign', 'ACType', 'Stand', 'EOBT', 'WP', 'RWY', 'TOBT', 'ETOT',
+    'TTOT', 'CTOT', 'ATOT', 'EXOT', 'TSAT', 'ARDT', 'AOBT', 'Differ'
   ];
 
-  const airlineheaders = ['Arrival','Reg','Type','From','A/ELDT\t\t','A/EIBT\t\t','Departure','To',
-    'EOBT\t\t','Parking Stand','TOBT\t\t','TSAT\t\t','ARDT\t\t','AOBT\t\t','CTOT\t\t','ATOT\t\t'
+  const airlineheaders = ['Arrival','Reg','Type','From','A/ELDT','A/EIBT','Departure','To',
+    'EOBT','Parking Stand','TOBT','TSAT','ARDT','AOBT','CTOT','ATOT'
   ];
 
   //const filePath = path.join(app.getPath('documents'), 'FlightData.txt');
@@ -158,7 +158,7 @@ function saveFlightDataToTxt(flightData) {
   let atcoContent = atcoheaders.join('\t') + '\n'; // Header row
   parsedData.forEach(flight => {
     const row = [
-      flight.AircraftId + '\t' || '',
+      flight.AircraftId || '',
       flight.Type || '',
       flight.DepartureGate || '',
       formatTimestamp(flight.EOBT) || '',
@@ -188,10 +188,10 @@ function saveFlightDataToTxt(flightData) {
       flight.PreviousDeparture || '',
       convertPreviousELDT(flight.PreviousELDT,flight.EOBT) || '',
       formatTimestamp(flight.AIBT) || '',
-      flight.AircraftId + '\t' || '',
+      flight.AircraftId || '',
       flight.Destination || '',
       formatTimestamp(flight.EOBT) || '',
-      flight.DepartureGate + '\t' || '',
+      flight.DepartureGate || '',
       formatTimestamp(flight.AirlineOffBlockTime) || '',
       formatTimestamp(flight.TSAT) || '',
       formatTimestamp(flight.ARDT) || '',
@@ -212,17 +212,17 @@ function saveFlightDataToTxt(flightData) {
 }
 
 function convertPreviousELDT(previousELDT, referenceTimestamp) {
-  if (!previousELDT || !referenceTimestamp) return "\t\t"; // Return blank if invalid
+  if (!previousELDT || !referenceTimestamp) return ""; // Return blank if invalid
 
   // Ensure PreviousELDT is in correct HHMM format (4-digit time)
-  if (!/^\d{4}$/.test(previousELDT)) return "\t\t";
+  if (!/^\d{4}$/.test(previousELDT)) return "";
 
   // Extract reference timestamp (AIBT) and validate
   const timestampMatch = referenceTimestamp.match(/\d+/);
-  if (!timestampMatch) return "\t\t"; // Return blank if invalid
+  if (!timestampMatch) return ""; // Return blank if invalid
 
   const referenceDate = new Date(parseInt(timestampMatch[0])); // Convert reference timestamp to Date
-  if (isNaN(referenceDate.getTime())) return "\t\t"; // Return blank if invalid timestamp
+  if (isNaN(referenceDate.getTime())) return ""; // Return blank if invalid timestamp
 
   // Extract date components from referenceDate (in UTC)
   let year = referenceDate.getUTCFullYear();
